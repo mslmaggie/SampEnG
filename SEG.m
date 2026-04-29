@@ -45,53 +45,58 @@ else
         t = t + 1;
     end
 
-    % Tolerance threshold
+    % Tolerance
     sigma = std(x);
     tol = r * sigma;
-    count_m = 0;
-    count_m1 = 0;
 
     % ---------------------------------------------------
     % Count for
     % m = m and m = m+1 pattern matrices
     %---------------------------------------------------
     % m embedding 
-    X = Lap(:,1:m);
-    X(any(isnan(X), 2), :) = [];
-    d_m = pdist(X(:,1:m), dist_type);             % Compute pairwise of m dimension vectors
+    Xm_tmp = Lap(:, 1:m);
+    
+    % Rows valid according to Xm
+    valid_rows_m = ~any(isnan(Xm_tmp), 2);
+
+    X_m  = Lap(valid_rows_m, 1:m);
+    X_m1 = Lap(valid_rows_m, 1:m1);
+
+    d_m = pdist(X_m(:,1:m), dist_type);             % Compute pairwise of m dimension vectors in rows
+
+    Nm = size(X_m, 1);
+        
  
     if isempty(d_m)
-        % If d_m = 0 => B = 0, SampEn is not defined: no regularity detected
-        % Upper bound is returned
+        % If B = 0, SampEn is not defined: no regularity detected
+        %   Note: Upper bound is returned
         Out_SampEn = Inf;
-    else
-        % Compute for m + 1 embedding
-        X = Lap;
-        X(any(isnan(Lap), 2), :) = [];
+    else      
 
-        % Compute pairwise of m+1 dimension vectors
-        d_m1 = pdist(X(:,1:m1), dist_type);
+        % Compute pairwise of m+1 dimension vectors in rows
+        d_m1 = pdist(X_m1, dist_type);
 
-        % Count for number of distances <= tolerance (Bm and Am)
+        % Count for number of distances <= tolerance
         count_m = sum(d_m  <= tol);
         count_m1 = sum(d_m1 <= tol);
 
         % Output 0 if SampEn is undefined
         if count_m1 == 0
-            Out_SampEn = 0;
+            Out_SampEn = Inf;
         else
             % Compute sample entropy
-            Out_SampEn = -log((count_m1 / count_m));
+            Out_SampEn = -log(count_m1 / count_m);
         end
     end
 
-    % Return boundaries of SampEn if undefined
     if isinf(Out_SampEn)
-        %       - Upper bound: -log(2)
-        Out_SampEn = -log(2);
-    elseif Out_SampEn < 0
-        %       - Lower bound: 0
-        Out_SampEn = 0;
+        % Note: SampEn has the following limits:
+        %       - Upper bound: log(N-m)+log(N-m-1)-log(2)
+        % Exactly one match in m+1
+        % But dependent on graph size
+        
+        Out_SampEn = log(Nm)+log(Nm-1)-log(2);
+
     end
     
 end
