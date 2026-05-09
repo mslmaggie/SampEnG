@@ -54,7 +54,7 @@ else
     % m = m and m = m+1 pattern matrices
     %---------------------------------------------------
     % m embedding 
-    Xm_tmp = Lap(:, 1:m);
+    Xm_tmp = Lap(:, 1:m1);
     
     % Rows valid according to Xm
     valid_rows_m = ~any(isnan(Xm_tmp), 2);
